@@ -1,0 +1,495 @@
+/* --- Variáveis de Cor e Configurações Globais --- */
+:root {
+    --bg-color: #f4f7f6;
+    --card-bg-color: #ffffff;
+    --text-color: #333333;
+    --primary-color: #007bff;
+    --primary-hover: #0056b3;
+    --secondary-color: #6c757d;
+    --secondary-hover: #5a6268;
+    --border-color: #e0e0e0;
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Tema Escuro */
+body.dark-theme {
+    --bg-color: #1a1a1a;
+    --card-bg-color: #2d2d2d;
+    --text-color: #e0e0e0;
+    --primary-color: #4dabf7;
+    --primary-hover: #339af0;
+    --secondary-color: #adb5bd;
+    --secondary-hover: #868e96;
+    --border-color: #495057;
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Reset e Estilos Base --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
+
+main {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    main {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* --- Cards e Formulários --- */
+.form-card, .items-container, .summary-card {
+    background-color: var(--card-bg-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+}
+
+.form-card h2, .items-container h2, .summary-card h2 {
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"],
+select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--card-bg-color);
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+input[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+/* --- Botões --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary-hover);
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.icon-button:hover {
+    background-color: var(--border-color);
+}
+
+.input-with-action {
+    display: flex;
+    align-items: center;
+}
+
+.input-with-action input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.action-button {
+    background-color: var(--secondary-color);
+    color: white;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* --- Lista de Itens --- */
+#items-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    background-color: var(--card-bg-color);
+    transition: background-color 0.3s;
+}
+
+.item.checked {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.item.dark-theme.checked {
+    background-color: #1b3a1b;
+    color: #81c784;
+}
+
+.item-info {
+    flex-grow: 1;
+}
+
+.item-info .product-name {
+    font-weight: bold;
+}
+
+.item-info .product-details {
+    font-size: 0.9em;
+    color: var(--secondary-color);
+}
+
+.item-actions {
+    display: flex;
+    align-items: center;
+}
+
+.item-checkbox {
+    margin-right: 1rem;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.item-delete {
+    color: #d32f2f;
+    cursor: pointer;
+}
+
+/* --- Resumo da Compra --- */
+.summary-card .summary-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    padding: 0.5rem 0;
+}
+
+/* --- Barra de Ações --- */
+.action-bar {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    padding: 1rem 0;
+    margin-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* --- Modais --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: var(--card-bg-color);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+.close-button {
+    color: var(--text-color);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: var(--primary-color);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.saved-list {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.saved-list-info {
+    flex-grow: 1;
+}
+
+.saved-list-actions button {
+    margin-left: 0.5rem;
+}
+
+.share-options {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+/* --- Modal Calculadora --- */
+.calculator {
+    max-width: 350px;
+}
+
+#calc-display {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.5rem;
+    text-align: right;
+    margin-bottom: 1rem;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.calc-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.calc-btn {
+    padding: 1.5rem 0;
+    font-size: 1.2rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--card-bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.calc-btn:hover {
+    background-color: var(--border-color);
+}
+
+.calc-btn.action {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.calc-btn.action:hover {
+    background-color: var(--primary-hover);
+}
+
+/* --- Modal Leitor de Código --- */
+#barcode-reader-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.barcode-result {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+    min-height: 24px;
+}
+
+.barcode-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* --- Destaque para o campo Valor Total --- */
+#total-value {
+    background-color: #eef7ff; /* Um azul bem claro */
+    color: #0056b3; /* Um azul escuro e forte */
+    font-weight: bold; /* Deixa o texto em negrito */
+    border: 1px solid #a3d5ff; /* Uma borda azul suave */
+    cursor: not-allowed; /* Indica que o campo não é editável */
+}
+
+/* --- Estilo para Item Editável --- */
+.product-name.editable {
+    cursor: pointer;
+    transition: text-decoration 0.2s ease-in-out;
+    display: inline-block; /* Necessário para o sublinhado funcionar bem */
+    max-width: 100%; /* Evita que o item quebre o layout */
+}
+
+.product-name.editable:hover {
+    text-decoration: underline;
+    color: var(--primary-color); /* Opcional: muda a cor no hover */
+}
+
+/* --- Modal de Edição de Item --- */
+#edit-item-modal .modal-content {
+    max-width: 500px;
+}
+
+#edit-total-value {
+    background-color: #eef7ff;
+    color: #0056b3;
+    font-weight: bold;
+    border: 1px solid #a3d5ff;
+    cursor: not-allowed;
+}
+
+/* Opcional: ícone de edição ao lado do nome */
+.product-name.editable {
+    position: relative;
+    padding-right: 28px; /* espaço pro ícone */
+}
+
+.product-name.editable::after {
+    content: '\e254'; /* código do material icon "edit" */
+    font-family: 'Material Symbols Outlined';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    opacity: 0.6;
+}
+
+.product-name.editable:hover::after {
+    opacity: 1;
+}
+
