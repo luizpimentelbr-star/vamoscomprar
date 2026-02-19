@@ -288,7 +288,7 @@ function renderItems() {
                 ${item.quantity} ${item.unit} x R$ ${item.unitValue.toFixed(2)} = R$ ${item.totalValue.toFixed(2)}
             </div>
             <div class="item-actions">
-                <span class="material-symbols-outlined item-edit" data-id="${item.id}" title="Editar">edit</span>
+                <span class="material-symbols-outlined item-edit" data-id="${item.id}" title="Editar">edit_square</span>
                 <span class="material-symbols-outlined item-delete" data-id="${item.id}" title="Excluir">delete</span>
             </div>
         `;
