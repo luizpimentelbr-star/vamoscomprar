@@ -513,3 +513,8 @@ input[readonly] {
     color: #dc3545; /* vermelho para exclusão */
 }
 
+.item-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap; /* permite quebrar linha em telas pequenas */
+}
