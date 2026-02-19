@@ -493,3 +493,23 @@ input[readonly] {
     opacity: 1;
 }
 
+/* Estilo geral para ícones de ação */
+.item-actions .material-symbols-outlined {
+    cursor: pointer; /* muda o cursor para a mãozinha */
+    transition: color 0.2s ease; /* animação suave */
+}
+
+/* Hover geral (se quiser uma cor padrão para todos) */
+.item-actions .material-symbols-outlined:hover {
+    color: #007bff; /* azul padrão */
+}
+
+/* Hover específico para cada ação */
+.item-actions .item-edit:hover {
+    color: #28a745; /* verde para edição */
+}
+
+.item-actions .item-delete:hover {
+    color: #dc3545; /* vermelho para exclusão */
+}
+
