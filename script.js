@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateTotals();
     }
-*/
+---------------------------------------------------
 
 function renderItems() {
     elements.itemsList.innerHTML = '';
@@ -268,6 +268,56 @@ function renderItems() {
     updateTotals();
 }
 
+*/
+
+function renderItems() {
+    elements.itemsList.innerHTML = '';
+    
+    if (currentList.items.length === 0) {
+        elements.itemsList.innerHTML = '<p>Sua lista está vazia. Adicione um item para começar!</p>';
+        updateTotals();
+        return;
+    }
+
+    currentList.items.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = `item ${item.checked ? 'checked' : ''}`;
+        itemElement.innerHTML = `
+            <input type="checkbox" class="item-checkbox" ${item.checked ? 'checked' : ''} data-id="${item.id}">
+            <div class="product-details">
+                ${item.quantity} ${item.unit} x R$ ${item.unitValue.toFixed(2)} = R$ ${item.totalValue.toFixed(2)}
+            </div>
+            <div class="item-actions">
+                <span class="material-symbols-outlined item-edit" data-id="${item.id}" title="Editar">edit</span>
+                <span class="material-symbols-outlined item-delete" data-id="${item.id}" title="Excluir">delete</span>
+            </div>
+        `;
+        elements.itemsList.appendChild(itemElement);
+    });
+
+    // Listeners para os elementos recém-criados
+    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const itemId = parseInt(e.target.dataset.id);
+            toggleItemCheck(itemId);
+        });
+    });
+
+    document.querySelectorAll('.item-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const itemId = parseInt(e.target.dataset.id);
+            openEditItemModal(itemId); // abre o modal de edição
+        });
+    });
+
+    document.querySelectorAll('.item-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            deleteItem(parseInt(e.target.dataset.id));
+        });
+    });
+
+    updateTotals();
+}
 
     function updateTotals() {
         const totals = currentList.items.reduce(
