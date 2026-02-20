@@ -282,7 +282,14 @@
     <!-- Biblioteca jsPDF para geração de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Script principal -->
-    <script src="script.js"></script>
+     
+    <script src="script.js"></script> 
+
+    <script>
+        const script = document.createElement("script");
+        script.src = "script.js?v=" + new Date().getTime(); // força versão nova
+        document.head.appendChild(script);
+    </script>
 
 </body>
 </html>
