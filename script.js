@@ -1,834 +1,742 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- VARIÁVEIS GLOBAIS E SELETORES DO DOM ---
-    const elements = {
-        editItemModal: document.getElementById('edit-item-modal'),
-        editProductName: document.getElementById('edit-product-name'),
-        editQuantity: document.getElementById('edit-quantity'),
-        editUnit: document.getElementById('edit-unit'),
-        editUnitValue: document.getElementById('edit-unit-value'),
-        editTotalValue: document.getElementById('edit-total-value'),
-        editForm: document.getElementById('edit-item-form'),
-        cancelEditBtn: document.getElementById('cancel-edit'),
-            
-        // Formulários e Campos
-        listForm: document.getElementById('list-form'),
-        itemForm: document.getElementById('item-form'),
-        storeNameInput: document.getElementById('store-name'),
-        purchaseDateInput: document.getElementById('purchase-date'),
-        productNameInput: document.getElementById('product-name'),
-        quantityInput: document.getElementById('quantity'),
-        unitSelect: document.getElementById('unit'),
-        unitValueInput: document.getElementById('unit-value'),
-        totalValueInput: document.getElementById('total-value'),
+// State
+let items = [];
+let currentListId = null;
+let editingItemId = null;
 
-        // Botões de Ação
-        newListBtn: document.getElementById('new-list-btn'),
-        saveListBtn: document.getElementById('save-list-btn'),
-        viewSavedBtn: document.getElementById('view-saved-btn'),
-        barcodeButton: document.getElementById('barcode-button'),
-        calcButton: document.getElementById('calc-button'),
+// Elements
+const body = document.body;
+const themeToggleBtn = document.getElementById('themeToggle');
+const menuBtn = document.getElementById('menuBtn');
+const optionsMenu = document.getElementById('optionsMenu');
 
-        // Listas e Resumos
-        itemsList: document.getElementById('items-list'),
-        totalGeneral: document.getElementById('total-general'),
-        totalPending: document.getElementById('total-pending'),
-        totalChecked: document.getElementById('total-checked'),
+// Form
+const storeNameInput = document.getElementById('storeName');
+const purchaseDateInput = document.getElementById('purchaseDate');
+const productNameInput = document.getElementById('productName');
+const quantityInput = document.getElementById('quantity');
+const unitInput = document.getElementById('unit');
+const unitPriceInput = document.getElementById('unitPrice');
+const totalPriceInput = document.getElementById('totalPrice');
+const addItemBtn = document.getElementById('addItemBtn');
+const feedbackMessage = document.getElementById('feedbackMessage');
+const listContainer = document.getElementById('listContainer');
 
-        // Modais
-        savedListsModal: document.getElementById('saved-lists-modal'),
-        shareModal: document.getElementById('share-modal'),
-        calculatorModal: document.getElementById('calculator-modal'),
-        barcodeModal: document.getElementById('barcode-modal'),
-        
-        // Botões de fechar modal
-        closeButtons: document.querySelectorAll('.close-button'),
+// Summaries
+const waitingCountEl = document.getElementById('waitingCount');
+const waitingTotalEl = document.getElementById('waitingTotal');
+const boughtCountEl = document.getElementById('boughtCount');
+const boughtTotalEl = document.getElementById('boughtTotal');
+const generalCountEl = document.getElementById('generalCount');
+const generalTotalEl = document.getElementById('generalTotal');
 
-        // Conteúdos de Modais
-        savedListsContainer: document.getElementById('saved-lists-container'),
-        shareListName: document.getElementById('share-list-name'),
-        
-        // Funcionalidades Especiais
-        themeToggle: document.getElementById('theme-toggle'),
-        calcDisplay: document.getElementById('calc-display'),
-        startScanBtn: document.getElementById('start-barcode-scan'),
-        stopScanBtn: document.getElementById('stop-barcode-scan'),
-        barcodeResult: document.getElementById('barcode-result'),
-        barcodeVideo: document.getElementById('barcode-video'),
-    };
+// Menu Actions
+const newListBtn = document.getElementById('newListBtn');
+const saveListBtn = document.getElementById('saveListBtn');
+const savedListsBtn = document.getElementById('savedListsBtn');
+const importListBtn = document.getElementById('importListBtn');
+const importXmlInput = document.getElementById('importXmlInput');
 
-    // --- ESTADO DA APLICAÇÃO ---
-    let currentList = {
-        id: null, // Usado para listas carregadas
-        storeName: '',
-        purchaseDate: '',
-        items: []
-    };
-    let codeReader = null;
-    let currentListIdToShare = null;
+// Modals
+const savedListsModal = document.getElementById('savedListsModal');
+const closeSavedListsBtn = document.getElementById('closeSavedListsBtn');
+const savedListsContainer = document.getElementById('savedListsContainer');
 
-    let editingItemId = null;
+const exportModal = document.getElementById('exportModal');
+const closeExportBtn = document.getElementById('closeExportBtn');
 
-    // --- INICIALIZAÇÃO ---
-    function initializeApp() {
-        setInitialDateTime();
-        setupEventListeners();
-        loadTheme();
-        renderItems(); // Renderiza a lista inicial (vazia)
+// Header Actions
+const scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
+const calendarBtn = document.getElementById('calendarBtn');
+const calcBtn = document.getElementById('calcBtn');
+
+// Initialize
+function init() {
+    loadTheme();
+    setDefaultDate();
+    loadUnsavedState();
+    setupEventListeners();
+    updateUI();
+}
+
+function setDefaultDate() {
+    if (!purchaseDateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        purchaseDateInput.value = today;
     }
+}
 
-    // --- CONFIGURAÇÃO DE EVENT LISTENERS ---
-    function setupEventListeners() {
-        // Formulários
-        elements.itemForm.addEventListener('submit', handleAddItem);
-        elements.listForm.addEventListener('input', updateCurrentListData);
+function setupEventListeners() {
+    // Theme
+    themeToggleBtn.addEventListener('click', toggleTheme);
 
-        // Botões de Ação
-        elements.newListBtn.addEventListener('click', createNewList);
-        elements.saveListBtn.addEventListener('click', saveList);
-        elements.viewSavedBtn.addEventListener('click', showSavedListsModal);
-        elements.barcodeButton.addEventListener('click', showBarcodeModal);
-        elements.calcButton.addEventListener('click', showCalculatorModal);
+    // Dropdown Menu
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // prevent document click from closing it immediately
+        toggleMenu();
+    });
 
-        // Modais
-        elements.closeButtons.forEach(btn => {
-            btn.addEventListener('click', () => btn.closest('.modal').style.display = 'none');
-        });
-        window.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        });
-
-        // Funcionalidades Especiais
-        elements.themeToggle.addEventListener('click', toggleTheme);
-        setupCalculator();
-        setupBarcodeScanner();
-
-        // Campos com cálculo automático
-        elements.quantityInput.addEventListener('input', calculateTotalValue);
-        elements.unitValueInput.addEventListener('input', calculateTotalValue);
-    }
-
-    // --- FUNÇÕES DO FORMULÁRIO E ITENS ---
-    function setInitialDateTime() {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        elements.purchaseDateInput.value = now.toISOString().slice(0, 16);
-    }
-
-    function handleAddItem(event) {
-        event.preventDefault();
-        const productName = elements.productNameInput.value.trim();
-        if (!productName) {
-            showFriendlyMessage('Por favor, preencha o nome do produto.', 'error');
-            return;
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!optionsMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+            closeMenu();
         }
+    });
 
+    // Calculations
+    quantityInput.addEventListener('input', calculateTotal);
+    unitPriceInput.addEventListener('input', calculateTotal);
+
+    // Add Item
+    addItemBtn.addEventListener('click', handleAddItem);
+
+    // Menu Options
+    newListBtn.addEventListener('click', handleNewList);
+    saveListBtn.addEventListener('click', handleSaveList);
+    savedListsBtn.addEventListener('click', openSavedListsModal);
+    if (importListBtn) {
+        importListBtn.addEventListener('click', () => {
+            closeMenu();
+            importXmlInput.click();
+        });
+    }
+    if (importXmlInput) importXmlInput.addEventListener('change', handleImportXml);
+
+    // Modals
+    closeSavedListsBtn.addEventListener('click', closeModals);
+    closeExportBtn.addEventListener('click', closeModals);
+
+    // Header Mock Actions
+    if (scanBarcodeBtn) scanBarcodeBtn.addEventListener('click', () => showMessage('Funcionalidade de leitura de barras (Mock)', 'warning'));
+    if (calendarBtn) calendarBtn.addEventListener('click', () => purchaseDateInput.showPicker && purchaseDateInput.showPicker());
+    if (calcBtn) calcBtn.addEventListener('click', () => showMessage('Calculadora (Mock)', 'warning'));
+}
+
+// Theme Management
+function toggleTheme() {
+    body.classList.toggle('dark-theme');
+    const isDark = body.classList.contains('dark-theme');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    themeToggleBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        body.classList.add('dark-theme');
+        themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    } else {
+        body.classList.remove('dark-theme');
+        themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+    }
+}
+
+// Menu Management
+function toggleMenu() {
+    optionsMenu.classList.toggle('hidden');
+}
+
+function closeMenu() {
+    optionsMenu.classList.add('hidden');
+}
+
+function closeModals() {
+    savedListsModal.classList.add('hidden');
+    exportModal.classList.add('hidden');
+}
+
+// Core Logic
+function calculateTotal() {
+    const qty = parseFloat(quantityInput.value) || 0;
+    const price = parseFloat(unitPriceInput.value) || 0;
+    totalPriceInput.value = (qty * price).toFixed(2);
+}
+
+function showMessage(msg, type = 'success') {
+    feedbackMessage.textContent = msg;
+    feedbackMessage.className = `feedback-msg feedback-${type}`;
+    feedbackMessage.classList.remove('hidden');
+    setTimeout(() => {
+        feedbackMessage.classList.add('hidden');
+    }, 3000);
+}
+
+function handleAddItem() {
+    const store = storeNameInput.value.trim();
+    const date = purchaseDateInput.value;
+    const name = productNameInput.value.trim();
+    const qty = parseFloat(quantityInput.value);
+    const unit = unitInput.value;
+    const price = parseFloat(unitPriceInput.value) || 0;
+    const total = parseFloat(totalPriceInput.value) || 0;
+
+    if (!store || !date) {
+        showMessage('Preencha o Nome do Empreendimento e Data.', 'error');
+        return;
+    }
+
+    if (!name || isNaN(qty) || qty <= 0) {
+        showMessage('Preencha o Nome do Produto e Quantidade corretamente.', 'error');
+        return;
+    }
+
+    if (editingItemId) {
+        // Update existing item
+        const itemIndex = items.findIndex(item => item.id === editingItemId);
+        if (itemIndex > -1) {
+            items[itemIndex] = {
+                ...items[itemIndex],
+                name,
+                qty,
+                unit,
+                price,
+                total
+            };
+            showMessage('Item atualizado com sucesso!', 'success');
+        }
+        editingItemId = null;
+        addItemBtn.textContent = 'Gravar Item';
+    } else {
+        // Create new item
         const newItem = {
-            id: Date.now(), // ID único e simples
-            name: productName,
-            quantity: parseFloat(elements.quantityInput.value),
-            unit: elements.unitSelect.value,
-            unitValue: parseFloat(elements.unitValueInput.value) || 1,
-            totalValue: 0,
-            checked: false
+            id: Date.now().toString(),
+            name,
+            qty,
+            unit,
+            price,
+            total,
+            bought: false
         };
-        newItem.totalValue = newItem.quantity * newItem.unitValue;
-
-        currentList.items.push(newItem);
-        renderItems();
-        clearItemForm();
-        showFriendlyMessage(`"${newItem.name}" adicionado à lista!`, 'success');
-    }
-    
-    function clearItemForm() {
-        elements.itemForm.reset();
-        elements.quantityInput.value = '1';
-        calculateTotalValue(); // Reseta o valor total para 0.00
+        items.unshift(newItem);
+        showMessage('Item gravado com sucesso!', 'success');
     }
 
-    function calculateTotalValue() {
-        const quantity = parseFloat(elements.quantityInput.value) || 1;
-        const unitValue = parseFloat(elements.unitValueInput.value) || 1;
-        const total = quantity * unitValue;
-        elements.totalValueInput.value = total.toFixed(2);
+    saveUnsavedState();
+
+    // Clear inputs specific to the product
+    productNameInput.value = '';
+    quantityInput.value = '';
+    unitPriceInput.value = '';
+    totalPriceInput.value = '';
+    productNameInput.focus();
+
+    updateUI();
+}
+
+window.deleteItem = function (id) {
+    items = items.filter(item => item.id !== id);
+    if (editingItemId === id) {
+        editingItemId = null;
+        addItemBtn.textContent = 'Gravar Item';
+        productNameInput.value = '';
+        quantityInput.value = '';
+        unitPriceInput.value = '';
+        totalPriceInput.value = '';
+    }
+    saveUnsavedState();
+    updateUI();
+};
+
+window.editItem = function (id) {
+    const item = items.find(item => item.id === id);
+    if (item) {
+        editingItemId = id;
+        productNameInput.value = item.name;
+        quantityInput.value = item.qty;
+        unitInput.value = item.unit;
+        unitPriceInput.value = item.price || '';
+        totalPriceInput.value = item.total;
+
+        addItemBtn.textContent = 'Atualizar Item';
+        productNameInput.focus();
+        window.scrollTo({ top: productNameInput.offsetTop - 100, behavior: 'smooth' });
+    }
+};
+
+window.toggleBought = function (id) {
+    const item = items.find(item => item.id === id);
+    if (item) {
+        item.bought = !item.bought;
+        saveUnsavedState();
+        updateUI();
+    }
+};
+
+// Format Currency
+function formatCurrency(value) {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+// UI Update
+function updateUI() {
+    renderList();
+    updateSummaries();
+}
+
+function renderList() {
+    if (items.length === 0) {
+        listContainer.innerHTML = '<div class="empty-state">Nenhum item adicionado ainda.</div>';
+        return;
     }
 
-    function deleteItem(itemId) {
-        currentList.items = currentList.items.filter(item => item.id !== itemId);
-        renderItems();
-        showFriendlyMessage('Item removido da lista.', 'info');
-    }
+    listContainer.innerHTML = '';
+    items.forEach(item => {
+        const itemEl = document.createElement('div');
+        itemEl.className = 'list-item glass';
+        itemEl.innerHTML = `
+            <div class="item-info">
+                <div class="item-name ${item.bought ? 'bought' : ''}">${item.name}</div>
+                <div class="item-details">
+                    ${item.qty} ${item.unit} ${item.price > 0 ? ` x ${formatCurrency(item.price)} = <strong>${formatCurrency(item.total)}</strong>` : ''}
+                </div>
+            </div>
+            <div class="item-actions">
+                <button class="icon-btn" onclick="editItem('${item.id}')" title="Editar">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="icon-btn toggle" data-bought="${item.bought}" onclick="toggleBought('${item.id}')" title="${item.bought ? 'Marcar como Pendente' : 'Marcar como Comprado'}">
+                    <i class="fa-solid ${item.bought ? 'fa-circle-check' : 'fa-circle'}"></i>
+                </button>
+                <button class="icon-btn delete" onclick="deleteItem('${item.id}')" title="Excluir">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
+        listContainer.appendChild(itemEl);
+    });
+}
 
-    function toggleItemCheck(itemId) {
-        const item = currentList.items.find(i => i.id === itemId);
-        if (item) {
-            item.checked = !item.checked;
-            renderItems();
+function updateSummaries() {
+    const waitingItems = items.filter(i => !i.bought);
+    const boughtItems = items.filter(i => i.bought);
+
+    const waitingTotal = waitingItems.reduce((acc, curr) => acc + curr.total, 0);
+    const boughtTotal = boughtItems.reduce((acc, curr) => acc + curr.total, 0);
+    const generalTotal = items.reduce((acc, curr) => acc + curr.total, 0);
+
+    waitingCountEl.textContent = waitingItems.length;
+    waitingTotalEl.textContent = formatCurrency(waitingTotal);
+
+    boughtCountEl.textContent = boughtItems.length;
+    boughtTotalEl.textContent = formatCurrency(boughtTotal);
+
+    generalCountEl.textContent = items.length;
+    generalTotalEl.textContent = formatCurrency(generalTotal);
+}
+
+// Local Storage & Persistence
+function saveUnsavedState() {
+    const state = {
+        store: storeNameInput.value,
+        date: purchaseDateInput.value,
+        items
+    };
+    localStorage.setItem('ag_shopping_current_list', JSON.stringify(state));
+}
+
+function loadUnsavedState() {
+    const savedState = localStorage.getItem('ag_shopping_current_list');
+    if (savedState) {
+        try {
+            const state = JSON.parse(savedState);
+            if (state.store) storeNameInput.value = state.store;
+            if (state.date) purchaseDateInput.value = state.date;
+            if (state.items) items = state.items;
+        } catch (e) {
+            console.error('Error loading current list state');
         }
     }
+}
 
-    /*
+function handleNewList() {
+    if (items.length > 0 && !confirm('Tem certeza que deseja criar uma nova lista? Seus itens não salvos serão perdidos.')) {
+        return;
+    }
 
-    function renderItems() {
-        elements.itemsList.innerHTML = '';
-        if (currentList.items.length === 0) {
-            elements.itemsList.innerHTML = '<p>Sua lista está vazia. Adicione um item para começar!</p>';
-            updateTotals();
-            return;
-        }
+    items = [];
+    storeNameInput.value = '';
+    setDefaultDate();
+    localStorage.removeItem('ag_shopping_current_list');
+    updateUI();
+    closeMenu();
+}
 
-        currentList.items.forEach(item => {
-            const itemElement = document.createElement('div');
-            itemElement.className = `item ${item.checked ? 'checked' : ''}`;
-            itemElement.innerHTML = `
-                <input type="checkbox" class="item-checkbox" ${item.checked ? 'checked' : ''} data-id="${item.id}">
-                <div class="item-info">
-                    <div class="product-name editable" data-id="${item.id}" title="Clique para editar">${item.name}</div>
+function handleSaveList() {
+    if (items.length === 0) {
+        alert('Adicione itens à lista antes de salvar.');
+        return;
+    }
+    if (!storeNameInput.value) {
+        alert('Informe o Nome do Empreendimento antes de salvar.');
+        return;
+    }
 
-                    <div class="product-details">
-                        ${item.quantity} ${item.unit} x R$ ${item.unitValue.toFixed(2)} = R$ ${item.totalValue.toFixed(2)}
-                    </div>
+    const listName = prompt('Nome para esta lista:', `Lista ${storeNameInput.value} - ${purchaseDateInput.value}`);
+    if (!listName) return;
+
+    let savedLists = JSON.parse(localStorage.getItem('ag_shopping_saved_lists') || '[]');
+
+    // Check if updating currently loaded list or new
+    const newList = {
+        id: Date.now().toString(),
+        name: listName,
+        store: storeNameInput.value,
+        date: purchaseDateInput.value,
+        items: [...items],
+        total: items.reduce((acc, curr) => acc + curr.total, 0)
+    };
+
+    savedLists.push(newList);
+    localStorage.setItem('ag_shopping_saved_lists', JSON.stringify(savedLists));
+    alert('Lista salva com sucesso!');
+    closeMenu();
+}
+
+function openSavedListsModal() {
+    closeMenu();
+    let savedLists = JSON.parse(localStorage.getItem('ag_shopping_saved_lists') || '[]');
+
+    if (savedLists.length === 0) {
+        savedListsContainer.innerHTML = '<p class="empty-state">Nenhuma lista salva encontrada.</p>';
+    } else {
+        savedListsContainer.innerHTML = '';
+        savedLists.forEach(list => {
+            const listCard = document.createElement('div');
+            listCard.className = 'saved-list-card glass';
+            listCard.innerHTML = `
+                <div>
+                    <strong>${list.name}</strong>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        ${list.items.length} itens | ${formatCurrency(list.total)}
+                    </span>
                 </div>
                 <div class="item-actions">
-                    <span class="material-symbols-outlined item-delete" data-id="${item.id}">delete</span>
+                    <button class="icon-btn" onclick="loadList('${list.id}')" title="Abrir Lista"><i class="fa-solid fa-folder-open"></i></button>
+                    <button class="icon-btn" onclick="openExportModal('${list.id}')" title="Exportar"><i class="fa-solid fa-share-nodes"></i></button>
+                    <button class="icon-btn delete" onclick="deleteSavedList('${list.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
-            elements.itemsList.appendChild(itemElement);
+            savedListsContainer.appendChild(listCard);
         });
-
-        // Adicionar listeners aos novos itens
-       // document.querySelectorAll('.item-checkbox').forEach(checkbox => {
-       //     checkbox.addEventListener('change', (e) => toggleItemCheck(parseInt(e.target.dataset.id)));
-       // });
-      
-      document.querySelectorAll('.product-name.editable').forEach(nameEl => {
-         nameEl.addEventListener('click', () => {
-        const itemId = parseInt(nameEl.dataset.id);
-        openEditItemModal(itemId);
-         });
-        });
-      
-       document.querySelectorAll('.item-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => deleteItem(parseInt(e.target.dataset.id)));
-        });
-
-        updateTotals();
     }
----------------------------------------------------
 
-function renderItems() {
-    elements.itemsList.innerHTML = '';
+    savedListsModal.classList.remove('hidden');
+}
+
+window.loadList = function (id) {
+    if (items.length > 0 && !confirm('Isso vai substituir sua lista atual. Continuar?')) return;
+
+    let savedLists = JSON.parse(localStorage.getItem('ag_shopping_saved_lists') || '[]');
+    const targetList = savedLists.find(l => l.id === id);
+
+    if (targetList) {
+        items = [...targetList.items];
+        storeNameInput.value = targetList.store;
+        purchaseDateInput.value = targetList.date;
+        saveUnsavedState();
+        updateUI();
+        closeModals();
+        showMessage('Lista carregada.', 'success');
+    }
+};
+
+window.deleteSavedList = function (id) {
+    if (!confirm('Excluir esta lista salva?')) return;
+    let savedLists = JSON.parse(localStorage.getItem('ag_shopping_saved_lists') || '[]');
+    savedLists = savedLists.filter(l => l.id !== id);
+    localStorage.setItem('ag_shopping_saved_lists', JSON.stringify(savedLists));
+    openSavedListsModal(); // refresh
+};
+
+// Export Setup
+let currentExportListId = null;
+
+window.openExportModal = function (id) {
+    currentExportListId = id;
+    savedListsModal.classList.add('hidden'); // hide saved lists
+    exportModal.classList.remove('hidden');
+};
+
+document.getElementById('exportTxtBtn').addEventListener('click', () => exportList('txt'));
+document.getElementById('exportXmlBtn').addEventListener('click', () => exportList('xml'));
+document.getElementById('exportPdfBtn').addEventListener('click', () => exportList('pdf'));
+
+function exportList(format) {
+    if (!currentExportListId) return;
+
+    let savedLists = JSON.parse(localStorage.getItem('ag_shopping_saved_lists') || '[]');
+    const list = savedLists.find(l => l.id === currentExportListId);
+
+    if (!list) return;
+
+    if (format === 'txt') {
+        exportAsTxt(list);
+    } else if (format === 'xml') {
+        exportAsXml(list);
+    } else if (format === 'pdf') {
+        exportAsPdf(list);
+    }
+
+    closeModals();
+}
+
+function exportAsTxt(list) {
+    let content = `=== ${list.name} ===\n`;
+    content += `Empreendimento: ${list.store}\n`;
+    content += `Data: ${list.date}\n\n`;
+
+    content += `ITENS:\n`;
+    list.items.forEach(i => {
+        content += `- [${i.bought ? 'X' : ' '}] ${i.name}: ${i.qty} ${i.unit} (Total: ${formatCurrency(i.total)})\n`;
+    });
+
+    content += `\nTotal Geral: ${formatCurrency(list.total)}`;
+
+    downloadFile(content, `lista_${list.id}.txt`, 'text/plain');
+}
+
+function exportAsXml(list) {
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<shoppingList>\n`;
+    xml += `  <name>${list.name}</name>\n`;
+    xml += `  <store>${list.store}</store>\n`;
+    xml += `  <date>${list.date}</date>\n`;
+    xml += `  <total>${list.total}</total>\n`;
+    xml += `  <items>\n`;
+
+    list.items.forEach(i => {
+        xml += `    <item>\n`;
+        xml += `      <name>${i.name}</name>\n`;
+        xml += `      <qty>${i.qty}</qty>\n`;
+        xml += `      <unit>${i.unit}</unit>\n`;
+        xml += `      <price>${i.price}</price>\n`;
+        xml += `      <total>${i.total}</total>\n`;
+        xml += `      <bought>${i.bought}</bought>\n`;
+        xml += `    </item>\n`;
+    });
+
+    xml += `  </items>\n`;
+    xml += `</shoppingList>`;
+
+    downloadFile(xml, `lista_${list.id}.xml`, 'application/xml');
+}
+/*
+
+function exportAsPdf(list) {
+    const tempDiv = document.createElement('div');
+    tempDiv.style.padding = '20px';
+    tempDiv.style.fontFamily = 'Inter, sans-serif';
+    tempDiv.style.color = '#1F2937';
+    tempDiv.style.backgroundColor = '#FFFFFF';
+
+    let html = `
+        <h1 style="color: #4F46E5;">${list.name}</h1>
+        <p><strong>Empreendimento:</strong> ${list.store}</p>
+        <p><strong>Data:</strong> ${list.date}</p>
+        <hr style="border: 1px solid #E5E7EB; margin: 15px 0;">
+        <table style="width:100%; text-align:left; border-collapse: collapse;">
+            <thead>
+                <tr style="background:#F3F4F6;">
+                    <th style="padding:10px; border-bottom:1px solid #D1D5DB;">Status</th>
+                    <th style="padding:10px; border-bottom:1px solid #D1D5DB;">Produto</th>
+                    <th style="padding:10px; border-bottom:1px solid #D1D5DB;">Qtd</th>
+                    <th style="padding:10px; border-bottom:1px solid #D1D5DB;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    list.items.forEach(i => {
+        html += `
+            <tr>
+                <td style="padding:10px; border-bottom:1px solid #E5E7EB; color: ${i.bought ? '#10B981' : '#F59E0B'}">
+                    ${i.bought ? '✓ Comprado' : '○ Pendente'}
+                </td>
+                <td style="padding:10px; border-bottom:1px solid #E5E7EB;">${i.name}</td>
+                <td style="padding:10px; border-bottom:1px solid #E5E7EB;">${i.qty} ${i.unit}</td>
+                <td style="padding:10px; border-bottom:1px solid #E5E7EB;">${formatCurrency(i.total)}</td>
+            </tr>
+        `;
+    });
+
+    html += `
+            </tbody>
+        </table>
+        <h2 style="text-align: right; margin-top:20px; color: #1F2937;">Total: ${formatCurrency(list.total)}</h2>
+    `;
+
+    tempDiv.innerHTML = html;
+
+    if (typeof html2pdf !== 'undefined') {
+        const opt = {
+            margin: 0.5,
+            filename: `lista_${list.id}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(tempDiv).save();
+    } else {
+        alert('Biblioteca PDF não carregada. Verifique sua conexão. Baixando como HTML alternativo.');
+        downloadFile(tempDiv.innerHTML, `lista_${list.id}.html`, 'text/html');
+    }
+}
+*/
+
+function exportAsPdf(list) {
+    // 1. Criar o contêiner do PDF
+    const tempDiv = document.createElement('div');
+    tempDiv.style.padding = '30px';
+    tempDiv.style.fontFamily = 'Arial, sans-serif';
+    tempDiv.style.color = '#333';
+    tempDiv.style.backgroundColor = '#fff';
+
+    // 2. Montar o HTML completo com TODOS os campos
+    let html = `
+        <h1 style="color: #4F46E5; text-align: center;">${list.name}</h1>
+        <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+            <p><strong>Empreendimento:</strong> ${list.store}</p>
+            <p><strong>Data:</strong> ${list.date}</p>
+        </div>
+        <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+                <tr style="background-color: #f3f4f6;">
+                    <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Status</th>
+                    <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Produto</th>
+                    <th style="border: 1px solid #ddd; padding: 10px; text-align: center;">Qtd</th>
+                    <th style="border: 1px solid #ddd; padding: 10px; text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // 3. Adicionar as linhas dos itens
+    list.items.forEach(i => {
+        const statusText = i.bought ? '✓ Comprado' : '○ Pendente';
+        const statusColor = i.bought ? '#10B981' : '#F59E0B'; // Verde ou Laranja
+        
+        html += `
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 10px; color: ${statusColor}; font-weight: bold;">${statusText}</td>
+                <td style="border: 1px solid #ddd; padding: 10px;">${i.name}</td>
+                <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">${i.qty} ${i.unit}</td>
+                <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">${formatCurrency(i.total)}</td>
+            </tr>
+        `;
+    });
+
+    // 4. Finalizar a tabela e adicionar o total geral
+    html += `
+            </tbody>
+        </table>
+        <h2 style="text-align: right; margin-top: 30px; color: #1F2937;">
+            Total Geral: ${formatCurrency(list.total)}
+        </h2>
+    `;
     
-    if (currentList.items.length === 0) {
-        elements.itemsList.innerHTML = '<p>Sua lista está vazia. Adicione um item para começar!</p>';
-        updateTotals();
+    tempDiv.innerHTML = html;
+    
+    // Adicionar temporariamente ao documento para renderizar
+    document.body.appendChild(tempDiv);
+
+    // 5. Gerar o PDF
+    if (typeof html2pdf !== 'undefined') {
+        const opt = {
+            margin: 0.5,
+            filename: `Lista_${list.store}_${list.date}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(tempDiv).save().then(() => {
+            // Limpar o documento
+            document.body.removeChild(tempDiv);
+        });
+    } else {
+        alert("Erro: Biblioteca PDF não carregada.");
+        document.body.removeChild(tempDiv);
+    }
+}
+
+
+
+function downloadFile(content, fileName, contentType) {
+    const a = document.createElement('a');
+    const file = new Blob([content], { type: contentType });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// Import XML
+function handleImportXml(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (items.length > 0 && !confirm('A importação substituirá sua lista atual. Continuar?')) {
+        event.target.value = '';
         return;
     }
 
-    currentList.items.forEach(item => {
-        const itemElement = document.createElement('div');
-        itemElement.className = `item ${item.checked ? 'checked' : ''}`;
-        itemElement.innerHTML = `
-           
-           <input type="checkbox" class="item-checkbox" name="item-check" ${item.checked ? 'checked' : ''} data-id="${item.id}">
-            
-                <div class="product-details">
-                    ${item.quantity} ${item.unit} x R$ ${item.unitValue.toFixed(2)} = R$ ${item.totalValue.toFixed(2)}
-                </div>
-            </div>
-            <div class="item-actions">
-                <span class="material-symbols-outlined item-delete" data-id="${item.id}">delete</span>
-            </div>
-        `;
-        elements.itemsList.appendChild(itemElement);
-    });
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(text, "text/xml");
 
-    // ← Aqui: listeners para os elementos recém-criados
-    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const itemId = parseInt(e.target.dataset.id);
-            toggleItemCheck(itemId);
-        });
-    });
+            const parserError = xmlDoc.getElementsByTagName("parsererror");
+            if (parserError.length > 0) {
+                showMessage('Arquivo XML inválido.', 'error');
+                return;
+            }
 
-    document.querySelectorAll('.product-name.editable').forEach(nameEl => {
-        nameEl.addEventListener('click', () => {
-            const itemId = parseInt(nameEl.dataset.id);
-            openEditItemModal(itemId);
-        });
-    });
+            const storeNode = xmlDoc.querySelector("shoppingList > store");
+            const dateNode = xmlDoc.querySelector("shoppingList > date");
+            const itemNodes = xmlDoc.querySelectorAll("shoppingList > items > item");
 
-    document.querySelectorAll('.item-delete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            deleteItem(parseInt(e.target.dataset.id));
-        });
-    });
+            if (!storeNode || !dateNode) {
+                 showMessage('XML sem dados básicos (Empreendimento/Data).', 'error');
+                 return;
+            }
 
-    updateTotals();
+            storeNameInput.value = storeNode.textContent;
+            purchaseDateInput.value = dateNode.textContent;
+
+            items = [];
+            itemNodes.forEach((node, index) => {
+                const name = node.querySelector("name")?.textContent || '';
+                const qty = parseFloat(node.querySelector("qty")?.textContent || 0);
+                const unit = node.querySelector("unit")?.textContent || 'un';
+                const price = parseFloat(node.querySelector("price")?.textContent || 0);
+                const total = parseFloat(node.querySelector("total")?.textContent || 0);
+                const boughtStr = node.querySelector("bought")?.textContent;
+                const bought = boughtStr === 'true';
+
+                items.push({
+                    id: Date.now().toString() + index + Math.random().toString(36).substring(2, 9),
+                    name,
+                    qty,
+                    unit,
+                    price,
+                    total,
+                    bought
+                });
+            });
+
+            saveUnsavedState();
+            updateUI();
+            showMessage('Lista importada com sucesso!', 'success');
+        } catch (error) {
+            console.error(error);
+            showMessage('Erro ao ler o arquivo XML.', 'error');
+        } finally {
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
 }
 
-*/
-
-function renderItems() {
-    elements.itemsList.innerHTML = '';
-    
-    if (currentList.items.length === 0) {
-        elements.itemsList.innerHTML = '<p>Sua lista está vazia. Adicione um item para começar!</p>';
-        updateTotals();
-        return;
-    }
-
-    currentList.items.forEach(item => {
-        const itemElement = document.createElement('div');
-        itemElement.className = `item ${item.checked ? 'checked' : ''}`;
-        itemElement.innerHTML = `
-            <input type="checkbox" class="item-checkbox" ${item.checked ? 'checked' : ''} data-id="${item.id}">
-            <div class="product-details">
-                ${item.quantity} ${item.unit} x R$ ${item.unitValue.toFixed(2)} = R$ ${item.totalValue.toFixed(2)}
-            </div>
-            <div class="item-actions">
-                <span class="material-symbols-outlined item-edit" data-id="${item.id}" title="Editar">create</span>
-                <span class="material-symbols-outlined item-delete" data-id="${item.id}" title="Excluir">delete</span>
-            </div>
-        `;
-        elements.itemsList.appendChild(itemElement);
-    });
-
-    // Listeners para os elementos recém-criados
-    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const itemId = parseInt(e.target.dataset.id);
-            toggleItemCheck(itemId);
-        });
-    });
-
-    document.querySelectorAll('.item-edit').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const itemId = parseInt(e.target.dataset.id);
-            openEditItemModal(itemId); // abre o modal de edição
-        });
-    });
-
-    document.querySelectorAll('.item-delete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            deleteItem(parseInt(e.target.dataset.id));
-        });
-    });
-
-    updateTotals();
-}
-
-    function updateTotals() {
-        const totals = currentList.items.reduce(
-            (acc, item) => {
-                const total = item.totalValue;
-                acc.general += total;
-                if (item.checked) {
-                    acc.checked += total;
-                } else {
-                    acc.pending += total;
-                }
-                return acc;
-            },
-            { general: 0, pending: 0, checked: 0 }
-        );
-
-        elements.totalGeneral.textContent = `R$ ${totals.general.toFixed(2)}`;
-        elements.totalPending.textContent = `R$ ${totals.pending.toFixed(2)}`;
-        elements.totalChecked.textContent = `R$ ${totals.checked.toFixed(2)}`;
-    }
-
-    // --- SISTEMA DE ARQUIVOS (LISTAS) ---
-    function updateCurrentListData() {
-        currentList.storeName = elements.storeNameInput.value;
-        currentList.purchaseDate = elements.purchaseDateInput.value;
-    }
-
-    function createNewList() {
-        if (confirm('Criar uma nova lista irá descartar os dados não salvos da lista atual. Deseja continuar?')) {
-            currentList = { id: null, storeName: '', purchaseDate: '', items: [] };
-            elements.listForm.reset();
-            clearItemForm();
-            setInitialDateTime();
-            renderItems();
-            showFriendlyMessage('Nova lista criada.', 'success');
-        }
-    }
-
-    function saveList() {
-        updateCurrentListData();
-        if (!currentList.storeName) {
-            showFriendlyMessage('O nome do empreendimento é obrigatório para salvar.', 'error');
-            elements.storeNameInput.focus();
-            return;
-        }
-        if (currentList.items.length === 0) {
-            showFriendlyMessage('Não é possível salvar uma lista vazia.', 'error');
-            return;
-        }
-
-        const listToSave = { ...currentList };
-        if (!listToSave.id) {
-            listToSave.id = `list_${Date.now()}`;
-        }
-        
-        const savedLists = getSavedListsFromStorage();
-        savedLists[listToSave.id] = listToSave;
-        localStorage.setItem('shoppingLists', JSON.stringify(savedLists));
-        
-        currentList.id = listToSave.id; // Atualiza o ID da lista atual
-        showFriendlyMessage(`Lista "${listToSave.storeName}" salva com sucesso!`, 'success');
-    }
-
-    function getSavedListsFromStorage() {
-        const lists = localStorage.getItem('shoppingLists');
-        return lists ? JSON.parse(lists) : {};
-    }
-
-    function showSavedListsModal() {
-        const savedLists = getSavedListsFromStorage();
-        elements.savedListsContainer.innerHTML = '';
-
-        if (Object.keys(savedLists).length === 0) {
-            elements.savedListsContainer.innerHTML = '<p>Nenhuma lista salva encontrada.</p>';
-        } else {
-            // Ordena listas pela data da mais recente para a mais antiga
-            const sortedLists = Object.values(savedLists).sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
-            sortedLists.forEach(list => {
-                const grandTotal = list.items.reduce((sum, item) => sum + item.totalValue, 0);
-                const listElement = document.createElement('div');
-                listElement.className = 'saved-list';
-                listElement.innerHTML = `
-                    <div class="saved-list-info">
-                        <strong>${list.storeName}</strong>
-                        <div>Data: ${new Date(list.purchaseDate).toLocaleString('pt-BR')}</div>
-                        <div>Total: R$ ${grandTotal.toFixed(2)}</div>
-                    </div>
-                    <div class="saved-list-actions">
-                        <button class="btn btn-primary open-list-btn" data-id="${list.id}">Abrir</button>
-                        <button class="btn btn-secondary share-list-btn" data-id="${list.id}">Compartilhar</button>
-                        <button class="btn btn-secondary delete-list-btn" data-id="${list.id}">Excluir</button>
-                    </div>
-                `;
-                elements.savedListsContainer.appendChild(listElement);
-            });
-
-            // Adicionar listeners aos botões das listas
-            elements.savedListsContainer.querySelectorAll('.open-list-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => loadList(e.target.dataset.id));
-            });
-            elements.savedListsContainer.querySelectorAll('.share-list-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => showShareModal(e.target.dataset.id));
-            });
-            elements.savedListsContainer.querySelectorAll('.delete-list-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => deleteList(e.target.dataset.id));
-            });
-        }
-        elements.savedListsModal.style.display = 'block';
-    }
-
-    function loadList(listId) {
-        const savedLists = getSavedListsFromStorage();
-        const list = savedLists[listId];
-        if (list) {
-            currentList = JSON.parse(JSON.stringify(list)); // Cria uma cópia profunda
-            elements.storeNameInput.value = currentList.storeName;
-            elements.purchaseDateInput.value = currentList.purchaseDate;
-            renderItems();
-            elements.savedListsModal.style.display = 'none';
-            showFriendlyMessage(`Lista "${list.storeName}" carregada.`, 'success');
-        }
-    }
-
-    function deleteList(listId) {
-        if (confirm('Tem certeza que deseja excluir esta lista? Esta ação não pode ser desfeita.')) {
-            const savedLists = getSavedListsFromStorage();
-            const listName = savedLists[listId]?.storeName || 'esta lista';
-            delete savedLists[listId];
-            localStorage.setItem('shoppingLists', JSON.stringify(savedLists));
-            showSavedListsModal(); // Atualiza a exibição
-            showFriendlyMessage(`Lista "${listName}" excluída.`, 'info');
-        }
-    }
-
-    // --- COMPARTILHAMENTO ---
-    function showShareModal(listId) {
-        const savedLists = getSavedListsFromStorage();
-        const list = savedLists[listId];
-        if (list) {
-            currentListIdToShare = listId;
-            elements.shareListName.textContent = list.storeName;
-            elements.savedListsModal.style.display = 'none';
-            elements.shareModal.style.display = 'block';
-        }
-    }
-    
-    // Funções de exportação (TXT, PDF, XML)
-    function exportListAs(listId, format) {
-        const savedLists = getSavedListsFromStorage();
-        const list = savedLists[listId];
-        if (!list) return;
-
-        let content = '';
-        let filename = `lista_compras_${list.storeName.replace(/\s+/g, '_')}`;
-        let mimeType = 'text/plain';
-
-        if (format === 'txt') {
-            content = `Lista de Compras: ${list.storeName}\n`;
-            content += `Data: ${new Date(list.purchaseDate).toLocaleString('pt-BR')}\n`;
-            content += '----------------------------------------\n\n';
-            list.items.forEach(item => {
-                content += `[${item.checked ? 'X' : ' '}] ${item.name}\n`;
-                content += `  ${item.quantity} ${item.unit} x R$ ${item.unitValue.toFixed(2)} = R$ ${item.totalValue.toFixed(2)}\n\n`;
-            });
-            const grandTotal = list.items.reduce((sum, item) => sum + item.totalValue, 0);
-            content += '========================================\n';
-            content += `TOTAL GERAL: R$ ${grandTotal.toFixed(2)}`;
-            filename += '.txt';
-        } else if (format === 'pdf') {
-            // Usa jsPDF
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const grandTotal = list.items.reduce((sum, item) => sum + item.totalValue, 0);
-            
-            doc.setFontSize(18);
-            doc.text(`Lista de Compras: ${list.storeName}`, 10, 20);
-            doc.setFontSize(12);
-            doc.text(`Data: ${new Date(list.purchaseDate).toLocaleString('pt-BR')}`, 10, 30);
-            
-            let yPosition = 50;
-            list.items.forEach(item => {
-                doc.text(`${item.checked ? '[X]' : '[ ]'} ${item.name}`, 10, yPosition);
-                doc.text(`  ${item.quantity} ${item.unit} x R$ ${item.unitValue.toFixed(2)} = R$ ${item.totalValue.toFixed(2)}`, 15, yPosition + 5);
-                yPosition += 15;
-                if (yPosition > 270) { doc.addPage(); yPosition = 20; } // Adiciona nova página se necessário
-            });
-            
-            doc.setFontSize(14);
-            doc.text(`TOTAL GERAL: R$ ${grandTotal.toFixed(2)}`, 10, yPosition + 10);
-            doc.save(`${filename}.pdf`);
-            showFriendlyMessage('PDF gerado e baixado com sucesso!', 'success');
-            return; // Retorna aqui pois o jsPDF lida com o download
-        } else if (format === 'xml') {
-            content = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-            content += `<lista>\n`;
-            content += `  <empreendimento>${escapeXml(list.storeName)}</empreendimento>\n`;
-            content += `  <data>${list.purchaseDate}</data>\n`;
-            content += `  <itens>\n`;
-            list.items.forEach(item => {
-                content += `    <item>\n`;
-                content += `      <nome>${escapeXml(item.name)}</nome>\n`;
-                content += `      <quantidade>${item.quantity}</quantidade>\n`;
-                content += `      <unidade>${item.unit}</unidade>\n`;
-                content += `      <valorUnitario>${item.unitValue}</valorUnitario>\n`;
-                content += `      <valorTotal>${item.totalValue}</valorTotal>\n`;
-                content += `      <comprado>${item.checked}</comprado>\n`;
-                content += `    </item>\n`;
-            });
-            content += `  </itens>\n`;
-            content += `</lista>`;
-            filename += '.xml';
-            mimeType = 'application/xml';
-        }
-        
-        // Cria e baixa o arquivo (para TXT e XML)
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showFriendlyMessage(`Lista exportada como ${format.toUpperCase()} com sucesso!`, 'success');
-    }
-    
-    function escapeXml(unsafe) {
-        return unsafe.replace(/[<>&'"]/g, function (c) {
-            switch (c) {
-                case '<': return '&lt;';
-                case '>': return '&gt;';
-                case '&': return '&amp;';
-                case '\'': return '&apos;';
-                case '"': return '&quot;';
-            }
-        });
-    }
-
-    // Adiciona listeners aos botões de compartilhamento
-    document.getElementById('share-txt').addEventListener('click', () => exportListAs(currentListIdToShare, 'txt'));
-    document.getElementById('share-pdf').addEventListener('click', () => exportListAs(currentListIdToShare, 'pdf'));
-    document.getElementById('share-xml').addEventListener('click', () => exportListAs(currentListIdToShare, 'xml'));
-
-    // --- FUNCIONALIDADES ESPECIAIS ---
-    
-    // Tema Claro/Escuro
-    function loadTheme() {
-        const theme = localStorage.getItem('theme');
-        if (theme === 'dark') {
-            document.body.classList.add('dark-theme');
-            elements.themeToggle.innerHTML = '<span class="material-symbols-outlined">dark_mode</span>';
-        }
-    }
-
-    function toggleTheme() {
-        document.body.classList.toggle('dark-theme');
-        const isDark = document.body.classList.contains('dark-theme');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        elements.themeToggle.innerHTML = isDark 
-            ? '<span class="material-symbols-outlined">dark_mode</span>'
-            : '<span class="material-symbols-outlined">light_mode</span>';
-    }
-
-    // Calculadora
-    function showCalculatorModal() {
-        elements.calculatorModal.style.display = 'block';
-        elements.calcDisplay.value = '';
-    }
-    
-    function setupCalculator() {
-        let calcExpression = '';
-        const calcButtons = document.querySelectorAll('.calc-btn');
-        
-        calcButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const value = btn.textContent;
-                
-                if (value >= '0' && value <= '9' || value === '.') {
-                    calcExpression += value;
-                } else if (['+', '-', '*', '/'].includes(value)) {
-                    calcExpression += ` ${value} `;
-                } else if (value === 'C') {
-                    calcExpression = '';
-                } else if (value === '⌫') {
-                    calcExpression = calcExpression.trim();
-                    calcExpression = calcExpression.slice(0, -1);
-                } else if (value === '=') {
-                    try {
-                        // Eval pode ser perigoso, mas como o input é controlado pelos botões, é seguro aqui.
-                        calcExpression = String(eval(calcExpression));
-                    } catch (e) {
-                        calcExpression = 'Erro';
-                    }
-                } else if (value === 'Usar Valor') {
-                    const valueToUse = parseFloat(calcExpression);
-                    if (!isNaN(valueToUse)) {
-                        elements.unitValueInput.value = valueToUse.toFixed(2);
-                        calculateTotalValue();
-                        elements.calculatorModal.style.display = 'none';
-                    } else {
-                        calcExpression = 'Valor Inválido';
-                    }
-                }
-                elements.calcDisplay.value = calcExpression;
-            });
-        });
-    }
-
-    // Leitor de Código de Barras
-    function showBarcodeModal() {
-        elements.barcodeModal.style.display = 'block';
-    }
-
-    function setupBarcodeScanner() {
-        elements.startScanBtn.addEventListener('click', startBarcodeScan);
-        elements.stopScanBtn.addEventListener('click', stopBarcodeScan);
-
-        if (!codeReader) {
-            codeReader = new ZXing.BrowserMultiFormatReader();
-        }
-    }
-
-    function startBarcodeScan() {
-        codeReader.decodeFromVideoDevice(undefined, elements.barcodeVideo, (result, err) => {
-            if (result) {
-                const code = result.text;
-                elements.barcodeResult.textContent = `Código lido: ${code}`;
-                checkAndSetProduct(code);
-                stopBarcodeScan(); // Para o scanner após a leitura
-            }
-            if (err && !(err instanceof ZXing.NotFoundException)) {
-                console.error(err);
-                elements.barcodeResult.textContent = `Erro ao escanear: ${err}`;
-            }
-        });
-        elements.startScanBtn.disabled = true;
-        elements.stopScanBtn.disabled = false;
-    }
-
-    function stopBarcodeScan() {
-        codeReader.reset();
-        elements.barcodeResult.textContent = 'Scanner parado.';
-        elements.startScanBtn.disabled = false;
-        elements.stopScanBtn.disabled = true;
-    }
-
-    function checkAndSetProduct(code) {
-        const productMap = JSON.parse(localStorage.getItem('productCodeMap') || '{}');
-        if (productMap[code]) {
-            elements.productNameInput.value = productMap[code];
-            showFriendlyMessage(`Produto "${productMap[code]}" encontrado para o código ${code}.`, 'success');
-        } else {
-            const productName = prompt(`Código ${code} não encontrado. Deseja associar a um produto? (Digite o nome do produto)`);
-            if (productName) {
-                productMap[code] = productName;
-                localStorage.setItem('productCodeMap', JSON.stringify(productMap));
-                elements.productNameInput.value = productName;
-                showFriendlyMessage(`Código ${code} associado ao produto "${productName}".`, 'success');
-            }
-        }
-    }
-
-    // --- MENSAGENS AMIGÁVEIS ---
-    function showFriendlyMessage(message, type = 'info') {
-        // Cria um elemento de notificação
-        const notification = document.createElement('div');
-        notification.className = `friendly-message ${type}`;
-        notification.textContent = message;
-
-        // Estilo da notificação (poderia estar no CSS, mas é mais prático aqui)
-        Object.assign(notification.style, {
-            position: 'fixed',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            color: 'white',
-            fontWeight: 'bold',
-            zIndex: '10000',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            transition: 'opacity 0.3s'
-        });
-
-        // Define a cor de fundo baseada no tipo
-        const colors = {
-            success: '#28a745',
-            error: '#dc3545',
-            info: '#17a2b8'
-        };
-        notification.style.backgroundColor = colors[type] || colors.info;
-
-        document.body.appendChild(notification);
-
-        // Remove a notificação após 3 segundos
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-
- /**
-     * Prepara um item para edição, transformando seu nome em um campo de input.
-     * @param {number} itemId - O ID do item a ser editado.
-     */
-
- /* --------------------------------------------------------------------
-    function prepareItemEdit(itemId) {
-        const item = currentList.items.find(i => i.id === itemId);
-        if (!item) return;
-
-        const nameElement = document.querySelector(`.product-name[data-id="${itemId}"]`);
-        if (!nameElement) return;
-
-        // Cria um campo de input para editar o nome
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = item.name;
-        input.className = 'edit-input';
-        input.style.width = '100%';
-        input.style.padding = '2px 5px';
-        input.style.border = '1px solid var(--primary-color)';
-        input.style.borderRadius = '3px';
-
-        // Substitui o elemento de texto pelo input
-        nameElement.innerHTML = '';
-        nameElement.appendChild(input);
-        input.focus();
-        input.select(); // Seleciona todo o texto para facilitar a edição
-
-        // Função para salvar a edição
-        const saveEdit = () => {
-            const newName = input.value.trim();
-            if (newName && newName !== item.name) {
-                item.name = newName;
-                renderItems(); // Re-renderiza a lista para atualizar todos os valores
-                showFriendlyMessage(`Item renomeado para "${newName}".`, 'success');
-            } else {
-                renderItems(); // Re-renderiza para voltar ao estado original se não houver mudança
-            }
-        };
-
-        // Eventos para salvar a edição
-        input.addEventListener('blur', saveEdit); // Salva ao perder o foco
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // Evita enviar formulários
-                saveEdit();
-            }
-            if (e.key === 'Escape') {
-                renderItems(); // Cancela a edição e re-renderiza
-            }
-        });
-    }
-*/
-function openEditItemModal(itemId) {
-    const item = currentList.items.find(i => i.id === itemId);
-    if (!item) return;
-
-    editingItemId = itemId;
-
-    elements.editProductName.value = item.name;
-    elements.editQuantity.value = item.quantity;
-    elements.editUnit.value = item.unit;
-    elements.editUnitValue.value = item.unitValue.toFixed(2);
-    updateEditTotalValue();
-
-    elements.editItemModal.style.display = 'block';
-}
-
-function updateEditTotalValue() {
-    const qty = parseInt(elements.editQuantity.value) || 0;
-    const unitVal = parseFloat(elements.editUnitValue.value) || 0;
-    const total = qty * unitVal;
-    elements.editTotalValue.value = total.toFixed(2);
-}
-
-// Listener para atualizar total em tempo real no modal
-elements.editQuantity.addEventListener('input', updateEditTotalValue);
-elements.editUnitValue.addEventListener('input', updateEditTotalValue);
-
-// Fechar modal ao cancelar
-elements.cancelEditBtn.addEventListener('click', () => {
-    elements.editItemModal.style.display = 'none';
-    editingItemId = null;
-});
-
-// Salvar edição
-elements.editForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    if (!editingItemId) return;
-
-    const item = currentList.items.find(i => i.id === editingItemId);
-    if (!item) return;
-
-    item.name = elements.editProductName.value.trim();
-    item.quantity = parseFloat(elements.editQuantity.value) || 1;
-    item.unit = elements.editUnit.value;
-    item.unitValue = parseFloat(elements.editUnitValue.value) || 0;
-    item.totalValue = item.quantity * item.unitValue;
-
-    renderItems();
-    elements.editItemModal.style.display = 'none';
-    editingItemId = null;
-
-    showFriendlyMessage('Item atualizado com sucesso!', 'success');
-});
-    // --- INICIALIZAR O APP ---
-    initializeApp();
-});
-
+// Start
+init();
