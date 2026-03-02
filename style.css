@@ -81,7 +81,9 @@ button {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 3%;
+    /* 1. Alinhando o padding com o .container */
+    padding-left: 5%; 
+    padding-right: 5%;
     background: var(--card-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
@@ -527,4 +529,12 @@ button {
     }
 }
 
-
+@media (min-width: 1200px) {
+    .app-header {
+        /* Centraliza o header em telas gigantes igual ao container */
+        max-width: 1200px;
+        margin: 0 auto;
+        /* Adiciona um pequeno raio de borda para ficar elegante */
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
+}
