@@ -81,7 +81,7 @@ button {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 5%;
+    padding: 1rem 3%;
     background: var(--card-bg);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
@@ -101,7 +101,7 @@ button {
 }
 
 .logo-title h1 {
-    font-size: 1.1rem; /* Reduzido de 1.25rem para caber no celular */
+    font-size: 1.3rem; /* Aumentado de 1.1rem */
     font-weight: 700;
     white-space: nowrap; /* Impede que o título quebre em várias linhas */
     overflow: hidden;
@@ -132,7 +132,7 @@ button {
 .header-options-dropdown {
     position: absolute;
     top: 4.5rem;
-    right: 5%;
+    right: 2%;
     background: var(--card-bg);
     backdrop-filter: blur(15px);
     border: 1px solid var(--border-color);
@@ -140,7 +140,7 @@ button {
     box-shadow: var(--shadow);
     z-index: 200;
     min-width: 200px;
-    max-width: 96vw; /* Nao deixa passar da largura da tela */
+    max-width: 95vw; /* Nao deixa passar da largura da tela */
     padding: 0.5rem;
     transform-origin: top right;
     transition: transform 0.2s ease-out, opacity 0.2s ease-out;
@@ -497,17 +497,28 @@ button {
 */
 
 /* --- MEDIA QUERY PARA CELULARES --- */
+
 @media (max-width: 480px) {
     .app-header {
         padding: 0.8rem 3%; /* Padding menor em telas muito pequenas */
     }
-
+/* Aumenta as fontes gerais para melhor leitura */
+    body {
+        font-size: 16px; /* Garante tamanho de fonte legível */
+    }
     .logo-title h1 {
-        font-size: 1rem; /* Fonte ainda menor */
+        font-size: 1.2rem; /* Fonte ainda menor */
     }
 
     .header-actions {
         gap: 0.5rem; /* Menor espaçamento entre ícones */
+    }
+    .header-actions button {
+        font-size: 1.4rem; /* Ícones maiores para clicar com o dedo */
+    }
+    
+    .list-item {
+        padding: 0.8rem; /* Ajuste no padding da lista */
     }
 
     .header-options-dropdown {
@@ -515,3 +526,5 @@ button {
         top: 4rem; /* Ajuste fino da posição */
     }
 }
+
+
