@@ -755,6 +755,18 @@ function handleImportXml(event) {
     };
     reader.readAsText(file);
 }
-
+// --- REGISTRO DO SERVICE WORKER ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('SW registrado com sucesso! Escopo:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Falha ao registrar o SW:', error);
+      });
+  });
+}
 // Start
 init();
+
