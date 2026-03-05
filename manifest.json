@@ -2,12 +2,12 @@
   "name": "Lista de Compras Inteligente",
   "short_name": "MinhaLista",
   "description": "Gerenciador de compras com suporte a XML e PDF",
-  "start_url": "https://luizpimentelbr-star.github.io/vamoscomprar/",
+  "start_url": "/vamoscomprar/index.html",
   "display": "standalone",
   "background_color": "#F3F4F6",
   "theme_color": "#4F46E5",
   "orientation": "portrait",
-  "scope": "https://luizpimentelbr-star.github.io/vamoscomprar/",
+  "scope": "/vamoscomprar/index.html",
   "icons": [
     {
       "src": "icons/icon-192.png",
