@@ -7,7 +7,7 @@
   "background_color": "#F3F4F6",
   "theme_color": "#4F46E5",
   "orientation": "portrait",
-  "scope": "/vamoscomprar/index.html",
+  "scope": "/vamoscomprar/",
   "icons": [
     {
       "src": "icons/icon-192.png",
