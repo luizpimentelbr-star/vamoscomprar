@@ -15,16 +15,25 @@
 
 <body class="light-theme">
     <header class="app-header">
-        <div class="logo-title">
-            <i class="fa-solid fa-cart-shopping logo"></i>
-            <h1>Lista de Compras</h1>
+        <div class="header-main">
+            <div class="logo-title">
+                <i class="fa-solid fa-cart-shopping logo"></i>
+                <h1>Lista de Compras</h1>
+            </div>
+            <div class="header-actions">
+                <button id="themeToggle" title="Alternar Tema"><i class="fa-solid fa-moon"></i></button>
+                <button id="sortListBtn" title="Ordenar A-Z"><i class="fa-solid fa-arrow-down-a-z"></i></button>
+                <button id="scanBarcodeBtn" title="Leitor de Código de Barras"><i
+                        class="fa-solid fa-barcode"></i></button>
+                <button id="calendarBtn" title="Abrir Calendário"><i class="fa-regular fa-calendar-days"></i></button>
+                <button id="calcBtn" title="Abrir Calculadora"><i class="fa-solid fa-calculator"></i></button>
+                <button id="menuBtn" class="hamburger-menu" title="Menu de Opções"><i
+                        class="fa-solid fa-bars"></i></button>
+            </div>
         </div>
-        <div class="header-actions">
-            <button id="themeToggle" title="Alternar Tema"><i class="fa-solid fa-moon"></i></button>
-            <button id="scanBarcodeBtn" title="Leitor de Código de Barras"><i class="fa-solid fa-barcode"></i></button>
-            <button id="calendarBtn" title="Abrir Calendário"><i class="fa-regular fa-calendar-days"></i></button>
-            <button id="calcBtn" title="Abrir Calculadora"><i class="fa-solid fa-calculator"></i></button>
-            <button id="menuBtn" class="hamburger-menu" title="Menu de Opções"><i class="fa-solid fa-bars"></i></button>
+        <div class="header-sub-bar">
+            <span>Itens: <span id="headerItemCount">0</span></span>
+            <span>Total: <span id="headerTotalValue" class="sub-total">R$ 0,00</span></span>
         </div>
     </header>
 
