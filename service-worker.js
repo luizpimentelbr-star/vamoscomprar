@@ -1,12 +1,13 @@
 const CACHE_NAME = "lista-compras-v1";
+const CACHE_NAME = "lista-compras-v1";
 const urlsToCache = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./script.js",
-  "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "/vamoscomprar/",
+  "/vamoscomprar/index.html",
+  "/vamoscomprar/style.css",
+  "/vamoscomprar/script.js",
+  "/vamoscomprar/manifest.json",
+  "/vamoscomprar/icons/icon-192.png",
+  "/vamoscomprar/icons/icon-512.png"
 ];
 
 // Instala e guarda arquivos no cache
