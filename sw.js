@@ -5,8 +5,8 @@ const urlsToCache = [
   "./style.css",
   "./script.js",
   "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icones/icon-192.png",
+  "./icones/icon-512.png"
 ];
 
 // Instala e guarda arquivos no cache
