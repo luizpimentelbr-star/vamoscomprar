@@ -45,9 +45,14 @@ const exportModal = document.getElementById('exportModal');
 const closeExportBtn = document.getElementById('closeExportBtn');
 
 // Header Actions
+const sortListBtn = document.getElementById('sortListBtn');
 const scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
 const calendarBtn = document.getElementById('calendarBtn');
 const calcBtn = document.getElementById('calcBtn');
+
+// Header Sub-bar text
+const headerItemCount = document.getElementById('headerItemCount');
+const headerTotalValue = document.getElementById('headerTotalValue');
 
 // Initialize
 function init() {
@@ -106,6 +111,7 @@ function setupEventListeners() {
     closeExportBtn.addEventListener('click', closeModals);
 
     // Header Mock Actions
+    if (sortListBtn) sortListBtn.addEventListener('click', sortListAlphabetically);
     if (scanBarcodeBtn) scanBarcodeBtn.addEventListener('click', () => showMessage('Funcionalidade de leitura de barras (Mock)', 'warning'));
     if (calendarBtn) calendarBtn.addEventListener('click', () => purchaseDateInput.showPicker && purchaseDateInput.showPicker());
     if (calcBtn) calcBtn.addEventListener('click', () => showMessage('Calculadora (Mock)', 'warning'));
@@ -321,6 +327,18 @@ function updateSummaries() {
 
     generalCountEl.textContent = items.length;
     generalTotalEl.textContent = formatCurrency(generalTotal);
+
+    if (headerItemCount) headerItemCount.textContent = items.length;
+    if (headerTotalValue) headerTotalValue.textContent = formatCurrency(generalTotal);
+}
+
+function sortListAlphabetically() {
+    if (items.length === 0) return;
+
+    items.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
+    saveUnsavedState();
+    updateUI();
+    showMessage('Lista ordenada de A a Z!', 'success');
 }
 
 // Local Storage & Persistence
@@ -613,7 +631,7 @@ function exportAsPdf(list) {
     list.items.forEach(i => {
         const statusText = i.bought ? '✓ Comprado' : '○ Pendente';
         const statusColor = i.bought ? '#10B981' : '#F59E0B'; // Verde ou Laranja
-        
+
         html += `
             <tr>
                 <td style="border: 1px solid #ddd; padding: 10px; color: ${statusColor}; font-weight: bold;">${statusText}</td>
@@ -632,9 +650,9 @@ function exportAsPdf(list) {
             Total Geral: ${formatCurrency(list.total)}
         </h2>
     `;
-    
+
     tempDiv.innerHTML = html;
-    
+
     // Adicionar temporariamente ao documento para renderizar
     document.body.appendChild(tempDiv);
 
@@ -647,7 +665,7 @@ function exportAsPdf(list) {
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
-        
+
         html2pdf().set(opt).from(tempDiv).save().then(() => {
             // Limpar o documento
             document.body.removeChild(tempDiv);
@@ -680,7 +698,7 @@ function handleImportXml(event) {
     }
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const text = e.target.result;
         try {
             const parser = new DOMParser();
@@ -697,8 +715,8 @@ function handleImportXml(event) {
             const itemNodes = xmlDoc.querySelectorAll("shoppingList > items > item");
 
             if (!storeNode || !dateNode) {
-                 showMessage('XML sem dados básicos (Empreendimento/Data).', 'error');
-                 return;
+                showMessage('XML sem dados básicos (Empreendimento/Data).', 'error');
+                return;
             }
 
             storeNameInput.value = storeNode.textContent;
