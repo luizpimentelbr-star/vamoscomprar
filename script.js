@@ -756,15 +756,14 @@ function handleImportXml(event) {
     reader.readAsText(file);
 }
 // --- REGISTRO DO SERVICE WORKER ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // Usamos o caminho relativo simples para o arquivo que está na mesma pasta
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('SW registrado com sucesso!', reg.scope))
-      .catch(err => console.error('Erro ao registrar SW:', err));
-  });
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js")
+    .then(() => console.log("Service Worker registrado!"));
 }
+
 // Start
 init();
+
 
 
