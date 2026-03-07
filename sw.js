@@ -1,52 +1,45 @@
-const CACHE_NAME = "lista-compras-v1";
-const urlsToCache = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./script.js",
-  "./manifest.json",
-  "./icones/icon-192.png",
-  "./icones/icon-512.png"
+// sw.js
+
+const CACHE_NAME = "app-cache-v1";
+const FILES_TO_CACHE = [
+  "/",              // raiz
+  "/index.html",
+  "/style.css",
+  "/script.js",
+  "/manifest.json"
 ];
 
-// Instala e guarda arquivos no cache
+// Instala o service worker e faz cache dos arquivos
 self.addEventListener("install", event => {
-  // Força o Service Worker a se tornar o ativo imediatamente
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log("Cache aberto com sucesso!");
-      return cache.addAll(urlsToCache);
+      return cache.addAll(FILES_TO_CACHE);
     })
   );
+  self.skipWaiting(); // força ativação imediata
 });
 
-// Ativa e limpa caches antigos
+// Ativa o service worker e limpa caches antigos
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then(keys => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
           }
         })
       );
     })
   );
-  // Garante que o SW controle a página imediatamente
-  return self.clients.claim();
+  self.clients.claim(); // assume controle das páginas abertas
 });
 
-// Intercepta requisições
+// Intercepta requisições e responde com cache ou rede
 self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request).then(response => {
-      // Retorna o cache ou busca na rede
-      return response || fetch(event.request).catch(() => {
-        // Fallback: se estiver offline e o recurso não estiver no cache
-        console.log("Recurso não encontrado no cache e você está offline.");
-      });
+      return response || fetch(event.request);
     })
   );
 });
