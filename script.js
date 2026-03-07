@@ -758,12 +758,14 @@ function handleImportXml(event) {
 // --- REGISTRO DO SERVICE WORKER ---
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js")
-    .then(() => console.log("Service Worker registrado!"));
+  navigator.serviceWorker.register("/sw.js")
+    .then(() => console.log("Service Worker registrado!"))
+    .catch(err => console.error("Erro ao registrar SW:", err));
 }
 
 // Start
 init();
+
 
 
 
