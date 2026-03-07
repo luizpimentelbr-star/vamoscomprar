@@ -1,31 +1,20 @@
 {
-  "name": "Lista de Compras Inteligente",
-  "short_name": "MinhaLista",
-  "description": "Gerenciador de compras com suporte a XML e PDF",
-  "start_url": "/vamoscomprar/index.html",
+  "name": "Meu App de Teste",
+  "short_name": "TesteApp",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#F3F4F6",
-  "theme_color": "#4F46E5",
-  "orientation": "portrait",
-  "scope": "/vamoscomprar/",
-  "icones": [
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
     {
-      "src": "icones/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "icones/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icones/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     }
   ]
 }
