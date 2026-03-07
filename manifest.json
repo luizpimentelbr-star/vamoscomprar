@@ -1,7 +1,8 @@
 {
   "name": "Vamos_Comprar",
   "short_name": "compras",
-  "start_url": "/vamoscomprar/",
+  "start_url": "/vamoscomprar/".
+   "scope": "/vamoscomprar/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
