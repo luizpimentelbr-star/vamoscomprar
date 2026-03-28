@@ -1,19 +1,19 @@
 {
-  "name": "Vamos_Comprar",
-  "short_name": "compras",
-  "start_url": "/vamoscomprar/",
-   "scope": "/vamoscomprar/",
+  "name": "Vamos Comprar",
+  "short_name": "Comprar",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "icones": [
+  "theme_color": "#4CAF50",
+  "orientation": "portrait",
+  "icons": [
     {
-      "src": "icon-192.png",
+      "src": "ícones/ícone-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "ícones/ícone-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
